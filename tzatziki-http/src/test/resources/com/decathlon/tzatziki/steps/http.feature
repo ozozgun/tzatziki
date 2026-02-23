@@ -1633,3 +1633,148 @@ Feature: to interact with an http service and setup mocks
       | id_2 |
       | id_3 |
 
+  # ==================== OAuth2 Client Credentials Flow Tests ====================
+
+  Scenario: Setup OAuth2 authentication and make an authenticated call
+    # Mock the OAuth2 token endpoint
+    Given that posting on "http://backend/oauth/token" will return:
+      """json
+      {
+        "access_token": "test-access-token-12345",
+        "token_type": "Bearer",
+        "expires_in": 3600
+      }
+      """
+    # Mock the protected API endpoint
+    And that calling "http://backend/api/protected" will return:
+      """json
+      {
+        "message": "Hello authenticated user!"
+      }
+      """
+    # Setup authentication - this will call the token endpoint
+    And Setup authentication for clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
+    # Make an authenticated call
+    When we call "http://backend/api/protected" as authenticated user "test-client"
+    Then we receive:
+      """json
+      {
+        "message": "Hello authenticated user!"
+      }
+      """
+    # Verify the token endpoint was called
+    And "http://backend/oauth/token" has received a POST
+    # Verify the protected endpoint was called
+    And "http://backend/api/protected" has received a GET
+
+  Scenario: Make authenticated POST request with body
+    # Mock the OAuth2 token endpoint
+    Given that posting on "http://backend/oauth/token" will return:
+      """json
+      {
+        "access_token": "post-test-token",
+        "token_type": "Bearer",
+        "expires_in": 3600
+      }
+      """
+    # Mock the protected API endpoint
+    And that posting on "http://backend/api/users" will return a status CREATED_201 and:
+      """json
+      {
+        "id": 1,
+        "name": "John Doe"
+      }
+      """
+    # Setup authentication
+    And Setup authentication for clientId "api-client" with clientSecret "api-secret" and token url "http://backend/oauth/token"
+    # Make an authenticated POST request
+    When we post on "http://backend/api/users" as authenticated user "api-client" with:
+      """json
+      {
+        "name": "John Doe"
+      }
+      """
+    Then we receive a status CREATED_201 and:
+      """json
+      {
+        "id": 1,
+        "name": "John Doe"
+      }
+      """
+    # Verify endpoints were called
+    And "http://backend/oauth/token" has received a POST
+    And "http://backend/api/users" has received a POST
+
+  Scenario: Authenticated call returns status and body
+    # Mock the OAuth2 token endpoint
+    Given that posting on "http://backend/oauth/token" will return:
+      """json
+      {
+        "access_token": "status-test-token",
+        "token_type": "Bearer",
+        "expires_in": 3600
+      }
+      """
+    # Mock the protected API endpoint
+    And that calling "http://backend/api/status" will return a status OK_200 and:
+      """json
+      {
+        "status": "healthy"
+      }
+      """
+    # Setup authentication
+    And Setup authentication for clientId "status-client" with clientSecret "status-secret" and token url "http://backend/oauth/token"
+    # Make authenticated call and verify status
+    Then we calling on "http://backend/api/status" as authenticated user "status-client" returns a status OK_200
+    # Verify with body
+    And we calling on "http://backend/api/status" as authenticated user "status-client" receives a status OK_200 and:
+      """json
+      {
+        "status": "healthy"
+      }
+      """
+
+  Scenario: Multiple authenticated users with different tokens
+    # Mock token endpoint to return different tokens based on client
+    Given that posting on "http://backend/oauth/token-a" will return:
+      """json
+      {
+        "access_token": "token-for-client-a",
+        "token_type": "Bearer"
+      }
+      """
+    And that posting on "http://backend/oauth/token-b" will return:
+      """json
+      {
+        "access_token": "token-for-client-b",
+        "token_type": "Bearer"
+      }
+      """
+    # Mock the protected API
+    And that calling "http://backend/api/whoami" will return:
+      """json
+      {
+        "authenticated": true
+      }
+      """
+    # Setup authentication for both clients with different token URLs
+    And Setup authentication for clientId "client-a" with clientSecret "secret-a" and token url "http://backend/oauth/token-a"
+    And Setup authentication for clientId "client-b" with clientSecret "secret-b" and token url "http://backend/oauth/token-b"
+    # Make calls as different users
+    When we call "http://backend/api/whoami" as authenticated user "client-a"
+    Then we receive:
+      """json
+      {
+        "authenticated": true
+      }
+      """
+    When we call "http://backend/api/whoami" as authenticated user "client-b"
+    Then we receive:
+      """json
+      {
+        "authenticated": true
+      }
+      """
+    # Verify both token endpoints were called
+    And "http://backend/oauth/token-a" has received a POST
+    And "http://backend/oauth/token-b" has received a POST

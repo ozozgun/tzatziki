@@ -99,6 +99,102 @@ Then a user calling "http://backend/endpoint" receives:
 
 This will wait and retry following what is described in the [timeout and retry delay](#Timeout-and-retry-delay) section.
 
+### OAuth2 Client Credentials Authentication
+
+This library provides built-in support for OAuth2 client credentials flow authentication. This allows you to set up authenticated API calls in your tests.
+
+#### Setting up OAuth2 Authentication
+
+Use the `Setup authentication` step to configure OAuth2 client credentials. This will automatically fetch the access token from the specified token URL:
+
+```gherkin
+Background:
+  * Setup authentication for clientId "my-service" with clientSecret "secret123" and token url "http://auth-server/oauth/token"
+```
+
+This step will:
+1. Make a POST request to the token URL with `grant_type=client_credentials`
+2. Parse the `access_token` from the JSON response
+3. Cache the token for use in subsequent authenticated calls
+
+#### Making Authenticated HTTP Calls
+
+Once authentication is set up, you can make authenticated HTTP calls using the `as authenticated user` syntax:
+
+```gherkin
+# Simple GET request
+When we call "http://backend/api/resource" as authenticated user "my-service"
+
+# POST with body
+When we post on "http://backend/api/users" as authenticated user "my-service" with:
+  """json
+  {
+    "name": "John Doe"
+  }
+  """
+
+# Assert response with authentication
+Then calling "http://backend/api/status" as authenticated user "my-service" returns a status OK_200
+
+# Assert response with body
+Then calling "http://backend/api/data" as authenticated user "my-service" receives a status OK_200 and:
+  """json
+  {
+    "result": "success"
+  }
+  """
+```
+
+The authenticated calls will automatically include the `Authorization: Bearer <token>` header.
+
+#### Multiple Authenticated Users
+
+You can set up multiple OAuth2 clients for different services:
+
+```gherkin
+Background:
+  * Setup authentication for clientId "service-a" with clientSecret "secret-a" and token url "http://auth/token"
+  * Setup authentication for clientId "service-b" with clientSecret "secret-b" and token url "http://auth/token"
+
+Scenario: Different services access different APIs
+  When we call "http://backend/api/a" as authenticated user "service-a"
+  Then we receive a status OK_200
+  
+  When we call "http://backend/api/b" as authenticated user "service-b"
+  Then we receive a status OK_200
+```
+
+#### Testing with Mocked OAuth2 Server
+
+In tests, you can mock the OAuth2 token endpoint:
+
+```gherkin
+Background:
+  Given that posting on "http://auth-server/oauth/token" will return:
+    """json
+    {
+      "access_token": "test-token-12345",
+      "token_type": "Bearer",
+      "expires_in": 3600
+    }
+    """
+  And Setup authentication for clientId "test-client" with clientSecret "test-secret" and token url "http://auth-server/oauth/token"
+
+Scenario: Make authenticated call to protected API
+  Given that calling "http://backend/api/protected" will return:
+    """json
+    {"message": "Hello authenticated user!"}
+    """
+  When we call "http://backend/api/protected" as authenticated user "test-client"
+  Then we receive:
+    """json
+    {"message": "Hello authenticated user!"}
+    """
+```
+
+But if you want to test your API's authorization, mocking just the token endpoint will not suffice. You will have to use a real oauth2 server. You can use the [mock-oauth2-server](https://github.com/navikt/mock-oauth2-server) for that.
+
+
 ### Mocking and interactions
 
 Internally, WireMock is used for defining mocks and asserting interactions.
