@@ -141,63 +141,15 @@ public class HttpSteps {
      * @param clientSecret the OAuth2 client secret
      * @param tokenUrl     the OAuth2 token endpoint URL
      */
-    @Given("^[Ss]etup authentication for clientId " + QUOTED_CONTENT + " with clientSecret " + QUOTED_CONTENT + " and token url " + QUOTED_CONTENT + "$")
-    public void setup_oauth2_authentication(String clientId, String clientSecret, String tokenUrl) {
+    @Given("^[Ss]etup authentication for user " + QUOTED_CONTENT + " with clientId " + QUOTED_CONTENT + " with clientSecret " + QUOTED_CONTENT + " and token url " + QUOTED_CONTENT + "$")
+    public void setup_oauth2_authentication(String user, String clientId, String clientSecret, String tokenUrl) {
         String resolvedClientId = objects.resolve(clientId);
         String resolvedClientSecret = objects.resolve(clientSecret);
         String resolvedTokenUrl = objects.resolve(tokenUrl);
         OAuth2ClientCredentialsStore.registerClient(resolvedClientId, resolvedClientSecret, resolvedTokenUrl);
         // Add the bearer token as a header for this authenticated user
         String accessToken = OAuth2ClientCredentialsStore.getAccessToken(resolvedClientId);
-        addHeader(resolvedClientId, "Authorization", "Bearer " + accessToken);
-    }
-
-    @When(THAT + GUARD + A_USER + CALL + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + "$")
-    public void call_as_authenticated_client(Guard guard, Method method, String path, String clientId) {
-        guard.in(objects, () -> {
-            String resolvedClientId = objects.resolve(clientId);
-            call(always(), resolvedClientId, method, path);
-        });
-    }
-
-    @When(THAT + GUARD + A_USER + SEND + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + "(?: with)?(?: " + A + TYPE + ")?:$")
-    public void send_as_authenticated_client(Guard guard, Method method, String path, String clientId, Type type, String content) {
-        guard.in(objects, () -> {
-            String resolvedClientId = objects.resolve(clientId);
-            send(guard, resolvedClientId, method, path, type, content);
-        });
-    }
-
-    @When(THAT + GUARD + A_USER + SEND + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + "(?: with)?(?: " + A + TYPE + ")? " + QUOTED_CONTENT + "$")
-    public void send_as_authenticated_client_(Guard guard, Method method, String path, String clientId, Type type, String content) {
-        send_as_authenticated_client(guard, method, path, clientId, type, content);
-    }
-
-    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + " (?:returns|receives) a status " + STATUS + "$")
-    public void call_as_authenticated_client_returns_status(Guard guard, Method method, String path, String clientId, HttpStatusCode status) {
-        guard.in(objects, () -> {
-            String resolvedClientId = objects.resolve(clientId);
-            call(always(), resolvedClientId, method, path);
-            we_receive_a_status(always(), status);
-        });
-    }
-
-    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + " (?:returns|receives) a status " + STATUS + " and" + COMPARING_WITH + "(?: " + A + TYPE + ")?:$")
-    public void call_as_authenticated_client_returns_status_and(Guard guard, Method method, String path, String clientId, HttpStatusCode status, Comparison comparison, Type type, String content) {
-        guard.in(objects, () -> {
-            String resolvedClientId = objects.resolve(clientId);
-            call(always(), resolvedClientId, method, path);
-            we_receive_a_status_and(always(), status, comparison, type, content);
-        });
-    }
-
-    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + " (?:returns|receives)" + COMPARING_WITH + "(?: " + A + TYPE + ")?:$")
-    public void call_as_authenticated_client_returns(Guard guard, Method method, String path, String clientId, Comparison comparison, Type type, String content) {
-        guard.in(objects, () -> {
-            String resolvedClientId = objects.resolve(clientId);
-            call(always(), resolvedClientId, method, path);
-            we_receive(always(), comparison, type, content);
-        });
+        addHeader(user, "Authorization", "Bearer " + accessToken);
     }
 
     @Given(THAT + GUARD + CALLING + " (?:on )?" + QUOTED_CONTENT + " will(?: take " + A_DURATION + " to)? return(?: " + A + TYPE + ")?:$")

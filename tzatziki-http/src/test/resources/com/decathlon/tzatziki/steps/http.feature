@@ -1653,9 +1653,9 @@ Feature: to interact with an http service and setup mocks
       }
       """
     # Setup authentication - this will call the token endpoint
-    And Setup authentication for clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
+    And Setup authentication for user "tester" with clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
     # Make an authenticated call
-    When we call "http://backend/api/protected" as authenticated client "test-client"
+    When we tester call "http://backend/api/protected"
     Then we receive:
       """json
       {
@@ -1666,6 +1666,49 @@ Feature: to interact with an http service and setup mocks
     And "http://backend/oauth/token" has received a POST
     # Verify the protected endpoint was called
     And "http://backend/api/protected" has received a GET
+
+  Scenario: Setup OAuth2 authentication and make an authenticated call with wrong user
+    # Mock the OAuth2 token endpoint
+    Given that "http://backend/oauth/token" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          Authorization: ?eq Basic dGVzdC10ZXN0ZXI6dGVzdC1zZWNyZXQ= # base64 of test-tester:test-secret
+      response:
+        status: OK_200
+        body:
+          payload:
+            access_token: test-access-token-12345
+            token_type: Bearer
+            expires_in: 3600
+      """
+    # Mock the protected API endpoint
+    Given that "http://backend/api/protected" is mocked as:
+      """yml
+      request:
+        method: GET
+        headers:
+          Authorization: ?eq Bearer test-access-token-12345
+      response:
+        status: OK_200
+        body:
+          payload:
+            message: Hello authenticated user!
+      """
+    Given that "http://backend/api/protected" is mocked as:
+      """yml
+      request:
+        method: GET
+        headers:
+          Authorization: ?isNull
+      response:
+        status: UNAUTHORIZED_401
+      """
+    # Setup authentication - this will call the token endpoint for user "tester"
+    And Setup authentication for user "tester" with clientId "test-tester" with clientSecret "test-secret" and token url "http://backend/oauth/token"
+    When tester2 call "http://backend/api/protected"
+    Then we receive a status 401
 
   Scenario: Make authenticated POST request with body
     # Mock the OAuth2 token endpoint
@@ -1686,9 +1729,9 @@ Feature: to interact with an http service and setup mocks
       }
       """
     # Setup authentication
-    And Setup authentication for clientId "api-client" with clientSecret "api-secret" and token url "http://backend/oauth/token"
+    And Setup authentication for user "tester" with clientId "api-client" with clientSecret "api-secret" and token url "http://backend/oauth/token"
     # Make an authenticated POST request
-    When we post on "http://backend/api/users" as authenticated client "api-client" with:
+    When tester post on "http://backend/api/users" with:
       """json
       {
         "name": "John Doe"
@@ -1723,11 +1766,11 @@ Feature: to interact with an http service and setup mocks
       }
       """
     # Setup authentication
-    And Setup authentication for clientId "status-client" with clientSecret "status-secret" and token url "http://backend/oauth/token"
+    And Setup authentication for user "tester" with clientId "status-client" with clientSecret "status-secret" and token url "http://backend/oauth/token"
     # Make authenticated call and verify status
-    Then we calling on "http://backend/api/status" as authenticated client "status-client" returns a status OK_200
+    Then tester calling on "http://backend/api/status" returns a status OK_200
     # Verify with body
-    And we calling on "http://backend/api/status" as authenticated client "status-client" receives a status OK_200 and:
+    And tester calling on "http://backend/api/status" receives a status OK_200 and:
       """json
       {
         "status": "healthy"
@@ -1758,17 +1801,17 @@ Feature: to interact with an http service and setup mocks
       }
       """
     # Setup authentication for both clients with different token URLs
-    And Setup authentication for clientId "client-a" with clientSecret "secret-a" and token url "http://backend/oauth/token-a"
-    And Setup authentication for clientId "client-b" with clientSecret "secret-b" and token url "http://backend/oauth/token-b"
+    And Setup authentication for user "tester1" with clientId "client-a" with clientSecret "secret-a" and token url "http://backend/oauth/token-a"
+    And Setup authentication for user "tester2" with clientId "client-b" with clientSecret "secret-b" and token url "http://backend/oauth/token-b"
     # Make calls as different clients
-    When we call "http://backend/api/whoami" as authenticated client "client-a"
+    When tester1 call "http://backend/api/whoami"
     Then we receive:
       """json
       {
         "authenticated": true
       }
       """
-    When we call "http://backend/api/whoami" as authenticated client "client-b"
+    When tester2 call "http://backend/api/whoami"
     Then we receive:
       """json
       {
