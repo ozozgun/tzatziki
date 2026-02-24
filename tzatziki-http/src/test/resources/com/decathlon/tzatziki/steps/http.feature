@@ -1655,7 +1655,7 @@ Feature: to interact with an http service and setup mocks
     # Setup authentication - this will call the token endpoint
     And Setup authentication for clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
     # Make an authenticated call
-    When we call "http://backend/api/protected" as authenticated user "test-client"
+    When we call "http://backend/api/protected" as authenticated client "test-client"
     Then we receive:
       """json
       {
@@ -1688,7 +1688,7 @@ Feature: to interact with an http service and setup mocks
     # Setup authentication
     And Setup authentication for clientId "api-client" with clientSecret "api-secret" and token url "http://backend/oauth/token"
     # Make an authenticated POST request
-    When we post on "http://backend/api/users" as authenticated user "api-client" with:
+    When we post on "http://backend/api/users" as authenticated client "api-client" with:
       """json
       {
         "name": "John Doe"
@@ -1725,9 +1725,9 @@ Feature: to interact with an http service and setup mocks
     # Setup authentication
     And Setup authentication for clientId "status-client" with clientSecret "status-secret" and token url "http://backend/oauth/token"
     # Make authenticated call and verify status
-    Then we calling on "http://backend/api/status" as authenticated user "status-client" returns a status OK_200
+    Then we calling on "http://backend/api/status" as authenticated client "status-client" returns a status OK_200
     # Verify with body
-    And we calling on "http://backend/api/status" as authenticated user "status-client" receives a status OK_200 and:
+    And we calling on "http://backend/api/status" as authenticated client "status-client" receives a status OK_200 and:
       """json
       {
         "status": "healthy"
@@ -1760,15 +1760,15 @@ Feature: to interact with an http service and setup mocks
     # Setup authentication for both clients with different token URLs
     And Setup authentication for clientId "client-a" with clientSecret "secret-a" and token url "http://backend/oauth/token-a"
     And Setup authentication for clientId "client-b" with clientSecret "secret-b" and token url "http://backend/oauth/token-b"
-    # Make calls as different users
-    When we call "http://backend/api/whoami" as authenticated user "client-a"
+    # Make calls as different clients
+    When we call "http://backend/api/whoami" as authenticated client "client-a"
     Then we receive:
       """json
       {
         "authenticated": true
       }
       """
-    When we call "http://backend/api/whoami" as authenticated user "client-b"
+    When we call "http://backend/api/whoami" as authenticated client "client-b"
     Then we receive:
       """json
       {
