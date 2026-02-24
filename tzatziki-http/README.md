@@ -112,6 +112,8 @@ Background:
   * Setup authentication for clientId "my-service" with clientSecret "secret123" and token url "http://auth-server/oauth/token"
 ```
 
+:warning: Warning: This feature is only for mocked oauth2 servers, as for now we support only a way to provide the clientSecret in plain text. Do not use it with a real oauth2 server if you don't want to expose your secret in your tests.
+
 This step will:
 1. Make a POST request to the token URL with `grant_type=client_credentials`
 2. Parse the `access_token` from the JSON response

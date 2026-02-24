@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Base64;
+
 import static io.restassured.RestAssured.given;
 
 /**
@@ -36,12 +38,16 @@ public final class OAuth2TokenFetcher {
         String resolvedTokenUrl = HttpWiremockUtils.target(tokenUrl);
         log.debug("Resolved token URL: {}", resolvedTokenUrl);
 
+        // Encode client credentials in base64 for Basic Authorization
+        String credentials = clientId + ":" + clientSecret;
+        String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
+        String authorizationHeader = "Basic " + encodedCredentials;
+
         try {
             Response response = given()
                     .contentType("application/x-www-form-urlencoded")
+                    .header("Authorization", authorizationHeader)
                     .formParam("grant_type", GRANT_TYPE_CLIENT_CREDENTIALS)
-                    .formParam("client_id", clientId)
-                    .formParam("client_secret", clientSecret)
                     .post(resolvedTokenUrl);
 
             int statusCode = response.getStatusCode();
