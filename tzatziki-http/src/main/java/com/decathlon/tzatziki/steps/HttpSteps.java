@@ -152,29 +152,29 @@ public class HttpSteps {
         addHeader(resolvedClientId, "Authorization", "Bearer " + accessToken);
     }
 
-    @When(THAT + GUARD + A_USER + CALL + " (?:on )?" + QUOTED_CONTENT + " as authenticated user " + QUOTED_CONTENT + "$")
-    public void call_as_authenticated_user(Guard guard, Method method, String path, String clientId) {
+    @When(THAT + GUARD + A_USER + CALL + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + "$")
+    public void call_as_authenticated_client(Guard guard, Method method, String path, String clientId) {
         guard.in(objects, () -> {
             String resolvedClientId = objects.resolve(clientId);
             call(always(), resolvedClientId, method, path);
         });
     }
 
-    @When(THAT + GUARD + A_USER + SEND + " (?:on )?" + QUOTED_CONTENT + " as authenticated user " + QUOTED_CONTENT + "(?: with)?(?: " + A + TYPE + ")?:$")
-    public void send_as_authenticated_user(Guard guard, Method method, String path, String clientId, Type type, String content) {
+    @When(THAT + GUARD + A_USER + SEND + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + "(?: with)?(?: " + A + TYPE + ")?:$")
+    public void send_as_authenticated_client(Guard guard, Method method, String path, String clientId, Type type, String content) {
         guard.in(objects, () -> {
             String resolvedClientId = objects.resolve(clientId);
             send(guard, resolvedClientId, method, path, type, content);
         });
     }
 
-    @When(THAT + GUARD + A_USER + SEND + " (?:on )?" + QUOTED_CONTENT + " as authenticated user " + QUOTED_CONTENT + "(?: with)?(?: " + A + TYPE + ")? " + QUOTED_CONTENT + "$")
-    public void send_as_authenticated_user_(Guard guard, Method method, String path, String clientId, Type type, String content) {
-        send_as_authenticated_user(guard, method, path, clientId, type, content);
+    @When(THAT + GUARD + A_USER + SEND + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + "(?: with)?(?: " + A + TYPE + ")? " + QUOTED_CONTENT + "$")
+    public void send_as_authenticated_client_(Guard guard, Method method, String path, String clientId, Type type, String content) {
+        send_as_authenticated_client(guard, method, path, clientId, type, content);
     }
 
-    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated user " + QUOTED_CONTENT + " (?:returns|receives) a status " + STATUS + "$")
-    public void call_as_authenticated_user_returns_status(Guard guard, Method method, String path, String clientId, HttpStatusCode status) {
+    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + " (?:returns|receives) a status " + STATUS + "$")
+    public void call_as_authenticated_client_returns_status(Guard guard, Method method, String path, String clientId, HttpStatusCode status) {
         guard.in(objects, () -> {
             String resolvedClientId = objects.resolve(clientId);
             call(always(), resolvedClientId, method, path);
@@ -182,8 +182,8 @@ public class HttpSteps {
         });
     }
 
-    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated user " + QUOTED_CONTENT + " (?:returns|receives) a status " + STATUS + " and" + COMPARING_WITH + "(?: " + A + TYPE + ")?:$")
-    public void call_as_authenticated_user_returns_status_and(Guard guard, Method method, String path, String clientId, HttpStatusCode status, Comparison comparison, Type type, String content) {
+    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + " (?:returns|receives) a status " + STATUS + " and" + COMPARING_WITH + "(?: " + A + TYPE + ")?:$")
+    public void call_as_authenticated_client_returns_status_and(Guard guard, Method method, String path, String clientId, HttpStatusCode status, Comparison comparison, Type type, String content) {
         guard.in(objects, () -> {
             String resolvedClientId = objects.resolve(clientId);
             call(always(), resolvedClientId, method, path);
@@ -191,8 +191,8 @@ public class HttpSteps {
         });
     }
 
-    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated user " + QUOTED_CONTENT + " (?:returns|receives)" + COMPARING_WITH + "(?: " + A + TYPE + ")?:$")
-    public void call_as_authenticated_user_returns(Guard guard, Method method, String path, String clientId, Comparison comparison, Type type, String content) {
+    @Then(THAT + GUARD + A_USER + CALLING + " (?:on )?" + QUOTED_CONTENT + " as authenticated client " + QUOTED_CONTENT + " (?:returns|receives)" + COMPARING_WITH + "(?: " + A + TYPE + ")?:$")
+    public void call_as_authenticated_client_returns(Guard guard, Method method, String path, String clientId, Comparison comparison, Type type, String content) {
         guard.in(objects, () -> {
             String resolvedClientId = objects.resolve(clientId);
             call(always(), resolvedClientId, method, path);

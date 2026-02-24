@@ -121,14 +121,14 @@ This step will:
 
 #### Making Authenticated HTTP Calls
 
-Once authentication is set up, you can make authenticated HTTP calls using the `as authenticated user` syntax:
+Once authentication is set up, you can make authenticated HTTP calls using the `as authenticated client` syntax:
 
 ```gherkin
 # Simple GET request
-When we call "http://backend/api/resource" as authenticated user "my-service"
+When we call "http://backend/api/resource" as authenticated client "my-service"
 
 # POST with body
-When we post on "http://backend/api/users" as authenticated user "my-service" with:
+When we post on "http://backend/api/users" as authenticated client "my-service" with:
   """json
   {
     "name": "John Doe"
@@ -136,10 +136,10 @@ When we post on "http://backend/api/users" as authenticated user "my-service" wi
   """
 
 # Assert response with authentication
-Then calling "http://backend/api/status" as authenticated user "my-service" returns a status OK_200
+Then calling "http://backend/api/status" as authenticated client "my-service" returns a status OK_200
 
 # Assert response with body
-Then calling "http://backend/api/data" as authenticated user "my-service" receives a status OK_200 and:
+Then calling "http://backend/api/data" as authenticated client "my-service" receives a status OK_200 and:
   """json
   {
     "result": "success"
@@ -149,7 +149,7 @@ Then calling "http://backend/api/data" as authenticated user "my-service" receiv
 
 The authenticated calls will automatically include the `Authorization: Bearer <token>` header.
 
-#### Multiple Authenticated Users
+#### Multiple Authenticated Clients
 
 You can set up multiple OAuth2 clients for different services:
 
@@ -159,10 +159,10 @@ Background:
   * Setup authentication for clientId "service-b" with clientSecret "secret-b" and token url "http://auth/token"
 
 Scenario: Different services access different APIs
-  When we call "http://backend/api/a" as authenticated user "service-a"
+  When we call "http://backend/api/a" as authenticated client "service-a"
   Then we receive a status OK_200
   
-  When we call "http://backend/api/b" as authenticated user "service-b"
+  When we call "http://backend/api/b" as authenticated client "service-b"
   Then we receive a status OK_200
 ```
 
@@ -187,7 +187,7 @@ Scenario: Make authenticated call to protected API
     """json
     {"message": "Hello authenticated user!"}
     """
-  When we call "http://backend/api/protected" as authenticated user "test-client"
+  When we call "http://backend/api/protected" as authenticated client "test-client"
   Then we receive:
     """json
     {"message": "Hello authenticated user!"}
