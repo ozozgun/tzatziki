@@ -105,11 +105,11 @@ This library provides built-in support for OAuth2 client credentials flow authen
 
 #### Setting up OAuth2 Authentication
 
-Use the `Setup authentication` step to configure OAuth2 client credentials. This will automatically fetch the access token from the specified token URL:
+Use the `Setup authentication for user` step to configure OAuth2 client credentials. This will automatically fetch the access token from the specified token URL and associate it with a user:
 
 ```gherkin
 Background:
-  * Setup authentication for clientId "my-service" with clientSecret "secret123" and token url "http://auth-server/oauth/token"
+  * Setup authentication for user "my-service" with clientId "my-client-id" with clientSecret "secret123" and token url "http://auth-server/oauth/token"
 ```
 
 :warning: Warning: This feature is only for mocked oauth2 servers, as for now we support only a way to provide the clientSecret in plain text. Do not use it with a real oauth2 server if you don't want to expose your secret in your tests.
@@ -117,18 +117,18 @@ Background:
 This step will:
 1. Make a POST request to the token URL with `grant_type=client_credentials`
 2. Parse the `access_token` from the JSON response
-3. Cache the token for use in subsequent authenticated calls
+3. Add the `Authorization: Bearer <token>` header for the specified user
 
 #### Making Authenticated HTTP Calls
 
-Once authentication is set up, you can make authenticated HTTP calls using the `as authenticated client` syntax:
+Once authentication is set up, you can make authenticated HTTP calls using the existing user-based syntax:
 
 ```gherkin
 # Simple GET request
-When we call "http://backend/api/resource" as authenticated client "my-service"
+When my-service calls "http://backend/api/resource"
 
 # POST with body
-When we post on "http://backend/api/users" as authenticated client "my-service" with:
+When my-service posts on "http://backend/api/users":
   """json
   {
     "name": "John Doe"
@@ -136,10 +136,10 @@ When we post on "http://backend/api/users" as authenticated client "my-service" 
   """
 
 # Assert response with authentication
-Then calling "http://backend/api/status" as authenticated client "my-service" returns a status OK_200
+Then my-service calling "http://backend/api/status" receives a status OK_200
 
 # Assert response with body
-Then calling "http://backend/api/data" as authenticated client "my-service" receives a status OK_200 and:
+Then my-service calling "http://backend/api/data" receives a status OK_200 and:
   """json
   {
     "result": "success"
@@ -155,14 +155,14 @@ You can set up multiple OAuth2 clients for different services:
 
 ```gherkin
 Background:
-  * Setup authentication for clientId "service-a" with clientSecret "secret-a" and token url "http://auth/token"
-  * Setup authentication for clientId "service-b" with clientSecret "secret-b" and token url "http://auth/token"
+  * Setup authentication for user "service-a" with clientId "client-a" with clientSecret "secret-a" and token url "http://auth/token"
+  * Setup authentication for user "service-b" with clientId "client-b" with clientSecret "secret-b" and token url "http://auth/token"
 
 Scenario: Different services access different APIs
-  When we call "http://backend/api/a" as authenticated client "service-a"
+  When service-a calls "http://backend/api/a"
   Then we receive a status OK_200
   
-  When we call "http://backend/api/b" as authenticated client "service-b"
+  When service-b calls "http://backend/api/b"
   Then we receive a status OK_200
 ```
 
@@ -180,14 +180,14 @@ Background:
       "expires_in": 3600
     }
     """
-  And Setup authentication for clientId "test-client" with clientSecret "test-secret" and token url "http://auth-server/oauth/token"
+  And Setup authentication for user "test-client" with clientId "test-client-id" with clientSecret "test-secret" and token url "http://auth-server/oauth/token"
 
 Scenario: Make authenticated call to protected API
   Given that calling "http://backend/api/protected" will return:
     """json
     {"message": "Hello authenticated user!"}
     """
-  When we call "http://backend/api/protected" as authenticated client "test-client"
+  When test-client calls "http://backend/api/protected"
   Then we receive:
     """json
     {"message": "Hello authenticated user!"}

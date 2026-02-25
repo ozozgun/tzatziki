@@ -1637,25 +1637,38 @@ Feature: to interact with an http service and setup mocks
 
   Scenario: Setup OAuth2 authentication and make an authenticated call
     # Mock the OAuth2 token endpoint
-    Given that posting on "http://backend/oauth/token" will return:
-      """json
-      {
-        "access_token": "test-access-token-12345",
-        "token_type": "Bearer",
-        "expires_in": 3600
-      }
+    Given that "http://backend/oauth/token" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          # base64 of test-client:test-secret
+          Authorization: ?eq Basic dGVzdC1jbGllbnQ6dGVzdC1zZWNyZXQ=
+      response:
+        status: OK_200
+        body:
+          payload:
+            access_token: test-access-token-12345
+            token_type: Bearer
+            expires_in: 3600
       """
     # Mock the protected API endpoint
-    And that calling "http://backend/api/protected" will return:
-      """json
-      {
-        "message": "Hello authenticated user!"
-      }
+    Given that "http://backend/api/protected" is mocked as:
+      """yml
+      request:
+        method: GET
+        headers:
+          Authorization: ?eq Bearer test-access-token-12345
+      response:
+        status: OK_200
+        body:
+          payload:
+            message: Hello authenticated user!
       """
     # Setup authentication - this will call the token endpoint
     And Setup authentication for user "tester" with clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
     # Make an authenticated call
-    When we tester call "http://backend/api/protected"
+    When tester call "http://backend/api/protected"
     Then we receive:
       """json
       {
@@ -1674,7 +1687,7 @@ Feature: to interact with an http service and setup mocks
       request:
         method: POST
         headers:
-          Authorization: ?eq Basic dGVzdC10ZXN0ZXI6dGVzdC1zZWNyZXQ= # base64 of test-tester:test-secret
+          Authorization: ?eq Basic dGVzdC1jbGllbnQ6dGVzdC1zZWNyZXQ= # base64 of test-client:test-secret
       response:
         status: OK_200
         body:
@@ -1706,27 +1719,43 @@ Feature: to interact with an http service and setup mocks
         status: UNAUTHORIZED_401
       """
     # Setup authentication - this will call the token endpoint for user "tester"
-    And Setup authentication for user "tester" with clientId "test-tester" with clientSecret "test-secret" and token url "http://backend/oauth/token"
+    And Setup authentication for user "tester" with clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
     When tester2 call "http://backend/api/protected"
     Then we receive a status 401
 
   Scenario: Make authenticated POST request with body
     # Mock the OAuth2 token endpoint
-    Given that posting on "http://backend/oauth/token" will return:
-      """json
-      {
-        "access_token": "post-test-token",
-        "token_type": "Bearer",
-        "expires_in": 3600
-      }
+    Given that "http://backend/oauth/token" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          # base64 of api-client:api-secret
+          Authorization: ?eq Basic YXBpLWNsaWVudDphcGktc2VjcmV0
+      response:
+        status: OK_200
+        body:
+          payload:
+            access_token: test-access-token-12345
+            token_type: Bearer
+            expires_in: 3600
       """
     # Mock the protected API endpoint
-    And that posting on "http://backend/api/users" will return a status CREATED_201 and:
-      """json
-      {
-        "id": 1,
-        "name": "John Doe"
-      }
+    Given that "http://backend/api/users" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          Authorization: ?eq Bearer test-access-token-12345
+        body:
+          payload:
+            name: John Doe
+      response:
+        status: CREATED_201
+        body:
+          payload:
+            id: 1
+            name: John Doe
       """
     # Setup authentication
     And Setup authentication for user "tester" with clientId "api-client" with clientSecret "api-secret" and token url "http://backend/oauth/token"
@@ -1750,20 +1779,33 @@ Feature: to interact with an http service and setup mocks
 
   Scenario: Authenticated call returns status and body
     # Mock the OAuth2 token endpoint
-    Given that posting on "http://backend/oauth/token" will return:
-      """json
-      {
-        "access_token": "status-test-token",
-        "token_type": "Bearer",
-        "expires_in": 3600
-      }
+    Given that "http://backend/oauth/token" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          # base64 of status-client:status-secret
+          Authorization: ?eq Basic c3RhdHVzLWNsaWVudDpzdGF0dXMtc2VjcmV0
+      response:
+        status: OK_200
+        body:
+          payload:
+            access_token: status-test-token
+            token_type: Bearer
+            expires_in: 3600
       """
     # Mock the protected API endpoint
-    And that calling "http://backend/api/status" will return a status OK_200 and:
-      """json
-      {
-        "status": "healthy"
-      }
+    Given that "http://backend/api/status" is mocked as:
+      """yml
+      request:
+        method: GET
+        headers:
+          Authorization: ?eq Bearer status-test-token
+      response:
+        status: OK_200
+        body:
+          payload:
+            status: healthy
       """
     # Setup authentication
     And Setup authentication for user "tester" with clientId "status-client" with clientSecret "status-secret" and token url "http://backend/oauth/token"
@@ -1779,26 +1821,61 @@ Feature: to interact with an http service and setup mocks
 
   Scenario: Multiple authenticated users with different tokens
     # Mock token endpoint to return different tokens based on client
-    Given that posting on "http://backend/oauth/token-a" will return:
-      """json
-      {
-        "access_token": "token-for-client-a",
-        "token_type": "Bearer"
-      }
+    Given that "http://backend/oauth/token-a" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          # base64 of client-a:secret-a
+          Authorization: ?eq Basic Y2xpZW50LWE6c2VjcmV0LWE=
+      response:
+        status: OK_200
+        body:
+          payload:
+            access_token: token-for-client-a
+            token_type: Bearer
+            expires_in: 3600
       """
-    And that posting on "http://backend/oauth/token-b" will return:
-      """json
-      {
-        "access_token": "token-for-client-b",
-        "token_type": "Bearer"
-      }
+    # Mock the OAuth2 token endpoint
+    And that "http://backend/oauth/token-b" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          # base64 of client-b:secret-b
+          Authorization: ?eq Basic Y2xpZW50LWI6c2VjcmV0LWI=
+      response:
+        status: OK_200
+        body:
+          payload:
+            access_token: token-for-client-b
+            token_type: Bearer
+            expires_in: 3600
       """
-    # Mock the protected API
-    And that calling "http://backend/api/whoami" will return:
-      """json
-      {
-        "authenticated": true
-      }
+    # Mock the protected API endpoint
+    Given that "http://backend/api/whoami" is mocked as:
+      """yml
+      request:
+        method: GET
+        headers:
+          Authorization: ?eq Bearer token-for-client-a
+      response:
+        status: OK_200
+        body:
+          payload:
+            authenticated: true
+      """
+    And that "http://backend/api/whoami" is mocked as:
+      """yml
+      request:
+        method: GET
+        headers:
+          Authorization: ?eq Bearer token-for-client-b
+      response:
+        status: OK_200
+        body:
+          payload:
+            authenticated: true
       """
     # Setup authentication for both clients with different token URLs
     And Setup authentication for user "tester1" with clientId "client-a" with clientSecret "secret-a" and token url "http://backend/oauth/token-a"
