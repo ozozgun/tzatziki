@@ -22,6 +22,7 @@ public final class OAuth2ClientCredentialsStore {
 
     /**
      * Registers a new OAuth2 client and immediately fetches the access token.
+     * If the client is already registered with the same configuration, the cached token is reused.
      *
      * @param clientId     the OAuth2 client ID
      * @param clientSecret the OAuth2 client secret
@@ -29,8 +30,15 @@ public final class OAuth2ClientCredentialsStore {
      * @throws AssertionError if token fetch fails
      */
     public static void registerClient(String clientId, String clientSecret, String tokenUrl) {
-        OAuth2ClientConfig config = new OAuth2ClientConfig(clientId, clientSecret, tokenUrl);
-        clientConfigs.put(clientId, config);
+        OAuth2ClientConfig newConfig = new OAuth2ClientConfig(clientId, clientSecret, tokenUrl);
+        OAuth2ClientConfig existingConfig = clientConfigs.get(clientId);
+
+        // Skip if client is already registered with the same configuration
+        if (newConfig.equals(existingConfig) && accessTokens.containsKey(clientId)) {
+            return;
+        }
+
+        clientConfigs.put(clientId, newConfig);
 
         // Fetch token immediately and cache it
         String accessToken = OAuth2TokenFetcher.fetchAccessToken(clientId, clientSecret, tokenUrl);

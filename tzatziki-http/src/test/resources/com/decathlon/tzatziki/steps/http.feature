@@ -1898,3 +1898,48 @@ Feature: to interact with an http service and setup mocks
     # Verify both token endpoints were called
     And "http://backend/oauth/token-a" has received a POST
     And "http://backend/oauth/token-b" has received a POST
+
+  Scenario: Registering the same client twice only calls OAuth2 server once
+    # Mock the OAuth2 token endpoint
+    Given that "http://backend/oauth/token" is mocked as:
+      """yml
+      request:
+        method: POST
+        headers:
+          # base64 of cached-client:cached-secret
+          Authorization: ?eq Basic Y2FjaGVkLWNsaWVudDpjYWNoZWQtc2VjcmV0
+      response:
+        status: OK_200
+        body:
+          payload:
+            access_token: cached-access-token
+            token_type: Bearer
+            expires_in: 3600
+      """
+    # Mock the protected API endpoint
+    Given that "http://backend/api/hello" is mocked as:
+      """yml
+      request:
+        method: GET
+        headers:
+          Authorization: ?eq Bearer cached-access-token
+      response:
+        status: OK_200
+        body:
+          payload:
+            message: Hello tester!
+      """
+    # Setup authentication - first registration should call the token endpoint
+    And Setup authentication for user "tester" with clientId "cached-client" with clientSecret "cached-secret" and token url "http://backend/oauth/token"
+    # Register the same client again - should NOT call the token endpoint
+    And Setup authentication for user "tester" with clientId "cached-client" with clientSecret "cached-secret" and token url "http://backend/oauth/token"
+    # Make an authenticated call
+    When tester call "http://backend/api/hello"
+    Then we receive:
+      """json
+      {
+        "message": "Hello tester!"
+      }
+      """
+    # Verify the token endpoint was called exactly once (not twice)
+    And "http://backend/oauth/token" has received exactly 1 POST
