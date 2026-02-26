@@ -105,12 +105,22 @@ This library provides built-in support for OAuth2 client credentials flow authen
 
 #### Setting up OAuth2 Authentication
 
-Use the `Setup authentication for user` step to configure OAuth2 client credentials. This will automatically fetch the access token from the specified token URL and associate it with a user:
+Use the `that the user "<user>" is authenticated with:` step to configure OAuth2 client credentials. This will automatically fetch the access token from the specified token URL and associate it with a user:
 
 ```gherkin
 Background:
-  * Setup authentication for user "my-service" with clientId "my-client-id" with clientSecret "secret123" and token url "http://auth-server/oauth/token"
+  Given that the user "my-service" is authenticated with:
+    """yml
+    client_id: my-client-id
+    client_secret: secret123
+    token_url: "http://auth-server/oauth/token"
+    """
 ```
+
+The docstring accepts the following YAML keys:
+- `client_id` — the OAuth2 client ID
+- `client_secret` — the OAuth2 client secret
+- `token_url` — the OAuth2 token endpoint URL
 
 :warning: Warning: This feature is only for mocked oauth2 servers, as for now we support only a way to provide the clientSecret in plain text. Do not use it with a real oauth2 server if you don't want to expose your secret in your tests.
 
@@ -155,8 +165,18 @@ You can set up multiple OAuth2 clients for different services:
 
 ```gherkin
 Background:
-  * Setup authentication for user "service-a" with clientId "client-a" with clientSecret "secret-a" and token url "http://auth/token"
-  * Setup authentication for user "service-b" with clientId "client-b" with clientSecret "secret-b" and token url "http://auth/token"
+  Given that the user "service-a" is authenticated with:
+    """yml
+    client_id: client-a
+    client_secret: secret-a
+    token_url: "http://auth/token"
+    """
+  And that the user "service-b" is authenticated with:
+    """yml
+    client_id: client-b
+    client_secret: secret-b
+    token_url: "http://auth/token"
+    """
 
 Scenario: Different services access different APIs
   When service-a calls "http://backend/api/a"
@@ -180,7 +200,12 @@ Background:
       "expires_in": 3600
     }
     """
-  And Setup authentication for user "test-client" with clientId "test-client-id" with clientSecret "test-secret" and token url "http://auth-server/oauth/token"
+  And that the user "test-client" is authenticated with:
+    """yml
+    client_id: test-client-id
+    client_secret: test-secret
+    token_url: "http://auth-server/oauth/token"
+    """
 
 Scenario: Make authenticated call to protected API
   Given that calling "http://backend/api/protected" will return:

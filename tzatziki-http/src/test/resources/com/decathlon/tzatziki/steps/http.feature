@@ -1666,7 +1666,12 @@ Feature: to interact with an http service and setup mocks
             message: Hello authenticated user!
       """
     # Setup authentication - this will call the token endpoint
-    And Setup authentication for user "tester" with clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
+    Given that the user "tester" is authenticated with:
+      """yml
+      client_id: test-client
+      client_secret: test-secret
+      token_url: "http://backend/oauth/token"
+      """
     # Make an authenticated call
     When tester call "http://backend/api/protected"
     Then we receive:
@@ -1719,7 +1724,12 @@ Feature: to interact with an http service and setup mocks
         status: UNAUTHORIZED_401
       """
     # Setup authentication - this will call the token endpoint for user "tester"
-    And Setup authentication for user "tester" with clientId "test-client" with clientSecret "test-secret" and token url "http://backend/oauth/token"
+    Given that the user "tester" is authenticated with:
+      """yml
+      client_id: test-client
+      client_secret: test-secret
+      token_url: "http://backend/oauth/token"
+      """
     When tester2 call "http://backend/api/protected"
     Then we receive a status 401
 
@@ -1758,7 +1768,12 @@ Feature: to interact with an http service and setup mocks
             name: John Doe
       """
     # Setup authentication
-    And Setup authentication for user "tester" with clientId "api-client" with clientSecret "api-secret" and token url "http://backend/oauth/token"
+    Given that the user "tester" is authenticated with:
+      """yml
+      client_id: api-client
+      client_secret: api-secret
+      token_url: "http://backend/oauth/token"
+      """
     # Make an authenticated POST request
     When tester post on "http://backend/api/users" with:
       """json
@@ -1808,7 +1823,12 @@ Feature: to interact with an http service and setup mocks
             status: healthy
       """
     # Setup authentication
-    And Setup authentication for user "tester" with clientId "status-client" with clientSecret "status-secret" and token url "http://backend/oauth/token"
+    Given that the user "tester" is authenticated with:
+      """yml
+      client_id: status-client
+      client_secret: status-secret
+      token_url: "http://backend/oauth/token"
+      """
     # Make authenticated call and verify status
     Then tester calling on "http://backend/api/status" returns a status OK_200
     # Verify with body
@@ -1878,8 +1898,18 @@ Feature: to interact with an http service and setup mocks
             authenticated: true
       """
     # Setup authentication for both clients with different token URLs
-    And Setup authentication for user "tester1" with clientId "client-a" with clientSecret "secret-a" and token url "http://backend/oauth/token-a"
-    And Setup authentication for user "tester2" with clientId "client-b" with clientSecret "secret-b" and token url "http://backend/oauth/token-b"
+    Given that the user "tester1" is authenticated with:
+      """yml
+      client_id: client-a
+      client_secret: secret-a
+      token_url: "http://backend/oauth/token-a"
+      """
+    And that the user "tester2" is authenticated with:
+      """yml
+      client_id: client-b
+      client_secret: secret-b
+      token_url: "http://backend/oauth/token-b"
+      """
     # Make calls as different clients
     When tester1 call "http://backend/api/whoami"
     Then we receive:
@@ -1930,9 +1960,19 @@ Feature: to interact with an http service and setup mocks
             message: Hello tester!
       """
     # Setup authentication - first registration should call the token endpoint
-    And Setup authentication for user "tester" with clientId "cached-client" with clientSecret "cached-secret" and token url "http://backend/oauth/token"
+    Given that the user "tester" is authenticated with:
+      """yml
+      client_id: cached-client
+      client_secret: cached-secret
+      token_url: "http://backend/oauth/token"
+      """
     # Register the same client again - should NOT call the token endpoint
-    And Setup authentication for user "tester" with clientId "cached-client" with clientSecret "cached-secret" and token url "http://backend/oauth/token"
+    And that the user "tester" is authenticated with:
+      """yml
+      client_id: cached-client
+      client_secret: cached-secret
+      token_url: "http://backend/oauth/token"
+      """
     # Make an authenticated call
     When tester call "http://backend/api/hello"
     Then we receive:

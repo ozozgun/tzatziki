@@ -134,20 +134,19 @@ public class HttpSteps {
     // ==================== OAuth2 Client Credentials Flow Steps ====================
 
     /**
-     * Sets up OAuth2 authentication for a client using the client credentials flow.
-     * This step fetches the access token immediately and caches it for use in subsequent authenticated calls.
+     * Sets up OAuth2 authentication for a client using the client credentials flow, reading credentials from a docstring.
+     * The docstring should be YAML-formatted with keys: client_id, client_secret, token_url.
      *
-     * @param clientId     the OAuth2 client ID
-     * @param clientSecret the OAuth2 client secret
-     * @param tokenUrl     the OAuth2 token endpoint URL
+     * @param user    the user alias to bind this authentication to
+     * @param content the YAML docstring containing client_id, client_secret, and token_url
      */
-    @Given("^[Ss]etup authentication for user " + QUOTED_CONTENT + " with clientId " + QUOTED_CONTENT + " with clientSecret " + QUOTED_CONTENT + " and token url " + QUOTED_CONTENT + "$")
-    public void setup_oauth2_authentication(String user, String clientId, String clientSecret, String tokenUrl) {
-        String resolvedClientId = objects.resolve(clientId);
-        String resolvedClientSecret = objects.resolve(clientSecret);
-        String resolvedTokenUrl = objects.resolve(tokenUrl);
+    @Given("^that the user " + QUOTED_CONTENT + " is authenticated with:$")
+    public void setup_oauth2_authentication(String user, String content) {
+        Map<String, String> params = Mapper.read(objects.resolve(content));
+        String resolvedClientId = objects.resolve(params.get("client_id"));
+        String resolvedClientSecret = objects.resolve(params.get("client_secret"));
+        String resolvedTokenUrl = objects.resolve(params.get("token_url"));
         OAuth2ClientCredentialsStore.registerClient(resolvedClientId, resolvedClientSecret, resolvedTokenUrl);
-        // Add the bearer token as a header for this authenticated user
         String accessToken = OAuth2ClientCredentialsStore.getAccessToken(resolvedClientId);
         addHeader(user, "Authorization", "Bearer " + accessToken);
     }
