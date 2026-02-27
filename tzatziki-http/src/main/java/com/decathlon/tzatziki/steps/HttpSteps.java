@@ -141,7 +141,7 @@ public class HttpSteps {
      * @param content the YAML docstring containing client_id, client_secret, and token_url
      */
     @Given(THAT + GUARD + "the user " + QUOTED_CONTENT + " is authenticated with:$")
-    public void setup_oauth2_authentication(String user, String content) {
+    public void setup_oauth2_authentication(Guard guard, String user, String content) {
         Map<String, String> params = Mapper.read(objects.resolve(content));
         String resolvedClientId = objects.resolve(params.get("client_id"));
         String resolvedClientSecret = objects.resolve(params.get("client_secret"));
