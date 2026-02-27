@@ -140,7 +140,7 @@ public class HttpSteps {
      * @param user    the user alias to bind this authentication to
      * @param content the YAML docstring containing client_id, client_secret, and token_url
      */
-    @Given("^that the user " + QUOTED_CONTENT + " is authenticated with:$")
+    @Given(THAT + GUARD + "the user " + QUOTED_CONTENT + " is authenticated with:$")
     public void setup_oauth2_authentication(String user, String content) {
         Map<String, String> params = Mapper.read(objects.resolve(content));
         String resolvedClientId = objects.resolve(params.get("client_id"));
